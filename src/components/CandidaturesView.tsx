@@ -228,6 +228,17 @@ function ApplicationCard({
             )}
           </div>
 
+          {details.photoUrl && (
+            <div>
+              <p className="text-[11px] font-bold text-slate-500 uppercase mb-1">Photo de profil</p>
+              <img
+                src={details.photoUrl}
+                alt="Photo de profil"
+                className="w-24 h-24 rounded-full object-cover border border-slate-200 mt-1"
+              />
+            </div>
+          )}
+
           {details.bio && (
             <div>
               <p className="text-[11px] font-bold text-slate-500 uppercase mb-1">Présentation</p>
@@ -247,6 +258,21 @@ function ApplicationCard({
                   className="max-w-xs rounded-lg border border-slate-200 mt-1"
                 />
               )}
+            </div>
+          )}
+
+          {details.cvUrl && (
+            <div>
+              <p className="text-[11px] font-bold text-slate-500 uppercase mb-1">
+                CV / Portfolio {details.cvFileName ? `— ${details.cvFileName}` : ""}
+              </p>
+              <a
+                href={details.cvUrl}
+                download={details.cvFileName || "cv"}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 underline"
+              >
+                Ouvrir / télécharger le fichier
+              </a>
             </div>
           )}
 
