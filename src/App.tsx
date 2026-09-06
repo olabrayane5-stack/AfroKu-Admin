@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   ClipboardCheck,
   Users,
+  UserCog,
   CalendarCheck,
   BarChart3,
   Settings,
@@ -14,8 +15,9 @@ import {
 } from "lucide-react";
 import { adminLogin, adminLogout, getStoredAdminSession, AdminUser } from "./services/adminAuth";
 import { CandidaturesView } from "./components/CandidaturesView";
+import { PartnersView } from "./components/PartnersView";
 
-type Section = "dashboard" | "candidatures" | "utilisateurs" | "reservations" | "statistiques" | "parametres";
+type Section = "dashboard" | "candidatures" | "partenaires" | "utilisateurs" | "reservations" | "statistiques" | "parametres";
 
 export default function App() {
   const [user, setUser] = useState<AdminUser | null>(null);
@@ -126,6 +128,7 @@ function LoginScreen({ onLoggedIn }: { onLoggedIn: (u: AdminUser) => void }) {
 const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode; ready: boolean }[] = [
   { id: "dashboard", label: "Tableau de bord", icon: <LayoutDashboard className="w-4 h-4" />, ready: true },
   { id: "candidatures", label: "Candidatures", icon: <ClipboardCheck className="w-4 h-4" />, ready: true },
+  { id: "partenaires", label: "Partenaires actifs", icon: <UserCog className="w-4 h-4" />, ready: true },
   { id: "utilisateurs", label: "Utilisateurs", icon: <Users className="w-4 h-4" />, ready: false },
   { id: "reservations", label: "Réservations", icon: <CalendarCheck className="w-4 h-4" />, ready: false },
   { id: "statistiques", label: "Statistiques", icon: <BarChart3 className="w-4 h-4" />, ready: false },
@@ -185,6 +188,7 @@ function AdminLayout({ user, onLogout }: { user: AdminUser; onLogout: () => void
       <main className="flex-1 p-6 overflow-y-auto">
         {section === "dashboard" && <DashboardHome user={user} />}
         {section === "candidatures" && <CandidaturesView />}
+        {section === "partenaires" && <PartnersView />}
       </main>
     </div>
   );
