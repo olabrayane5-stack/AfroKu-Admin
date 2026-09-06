@@ -65,3 +65,45 @@ export async function rejectApplication(id: string, reason: string) {
   });
   return parseOrThrow(response);
 }
+
+export interface ActivePartner {
+  userId: string;
+  type: "guide" | "artisan";
+  email: string;
+  applicationId: string | null;
+  details: Record<string, any>;
+  productCount: number;
+}
+
+/**
+ * Liste les comptes Guide/Artisan déjà vérifiés (donc déjà visibles sur le
+ * site public) — distinct des candidatures en attente.
+ */
+export async function fetchActivePartners(): Promise<ActivePartner[]> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/partners`, { headers: authHeaders() });
+  const data = await parseOrThrow(response);
+  return data.partners;
+}
+
+/** Modifie les informations publiques d'un partenaire déjà validé. */
+export async function updatePartner(userId: string, details: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/partners/${userId}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ details }),
+  });
+  return parseOrThrow(response);
+}
+
+/**
+ * Supprime intégralement le statut de partenaire : le compte redevient
+ * Voyageur, toutes les infos Guide/Artisan (+ produits si Artisan) sont
+ * effacées.
+ */
+export async function deletePartner(userId: string) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/partners/${userId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return parseOrThrow(response);
+}
