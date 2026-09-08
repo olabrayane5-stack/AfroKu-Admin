@@ -8,17 +8,20 @@ import {
   ClipboardCheck,
   Users,
   UserCog,
+  Package,
   CalendarCheck,
   BarChart3,
   Settings,
   Lock,
 } from "lucide-react";
 import { adminLogin, adminLogout, getStoredAdminSession, AdminUser } from "./services/adminAuth";
+import { fetchApplications, fetchProducts } from "./services/adminApi";
 import { CandidaturesView } from "./components/CandidaturesView";
 import { PartnersView } from "./components/PartnersView";
+import { ProductsView } from "./components/ProductsView";
 import { StatisticsView } from "./components/StatisticsView";
 
-type Section = "dashboard" | "candidatures" | "partenaires" | "utilisateurs" | "reservations" | "statistiques" | "parametres";
+type Section = "dashboard" | "candidatures" | "partenaires" | "produits" | "utilisateurs" | "reservations" | "statistiques" | "parametres";
 
 export default function App() {
   const [user, setUser] = useState<AdminUser | null>(null);
@@ -130,6 +133,7 @@ const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode; ready: boo
   { id: "dashboard", label: "Tableau de bord", icon: <LayoutDashboard className="w-4 h-4" />, ready: true },
   { id: "candidatures", label: "Candidatures", icon: <ClipboardCheck className="w-4 h-4" />, ready: true },
   { id: "partenaires", label: "Partenaires actifs", icon: <UserCog className="w-4 h-4" />, ready: true },
+  { id: "produits", label: "Produits Artisans", icon: <Package className="w-4 h-4" />, ready: true },
   { id: "utilisateurs", label: "Utilisateurs", icon: <Users className="w-4 h-4" />, ready: false },
   { id: "reservations", label: "Réservations", icon: <CalendarCheck className="w-4 h-4" />, ready: false },
   { id: "statistiques", label: "Statistiques", icon: <BarChart3 className="w-4 h-4" />, ready: true },
@@ -138,6 +142,31 @@ const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode; ready: boo
 
 function AdminLayout({ user, onLogout }: { user: AdminUser; onLogout: () => void }) {
   const [section, setSection] = useState<Section>("dashboard");
+  const [pendingCandidatures, setPendingCandidatures] = useState(0);
+  const [pendingProducts, setPendingProducts] = useState(0);
+
+  const refreshBadges = () => {
+    fetchApplications("pending").then((list) => setPendingCandidatures(list.length)).catch(() => {});
+    fetchProducts("pending").then((list) => setPendingProducts(list.length)).catch(() => {});
+  };
+
+  // Recharge les compteurs au démarrage, puis à chaque fois qu'on revient
+  // sur le tableau de bord (après avoir traité une candidature/un produit
+  // ailleurs), et toutes les 60s en tâche de fond.
+  useEffect(() => {
+    refreshBadges();
+    const interval = setInterval(refreshBadges, 60000);
+    return () => clearInterval(interval);
+  }, []);
+  useEffect(() => {
+    if (section === "dashboard") refreshBadges();
+  }, [section]);
+
+  const badgeFor = (id: Section): number => {
+    if (id === "candidatures") return pendingCandidatures;
+    if (id === "produits") return pendingProducts;
+    return 0;
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 flex">
@@ -150,26 +179,34 @@ function AdminLayout({ user, onLogout }: { user: AdminUser; onLogout: () => void
           </span>
         </div>
         <nav className="flex-1 p-3 space-y-1">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => item.ready && setSection(item.id)}
-              disabled={!item.ready}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                section === item.id
-                  ? "bg-white/10 text-gold"
-                  : item.ready
-                  ? "text-white/85 hover:bg-white/10 hover:text-white cursor-pointer"
-                  : "text-white/35 cursor-not-allowed"
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                {item.icon}
-                {item.label}
-              </span>
-              {!item.ready && <Lock className="w-3 h-3" />}
-            </button>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const count = badgeFor(item.id);
+            return (
+              <button
+                key={item.id}
+                onClick={() => item.ready && setSection(item.id)}
+                disabled={!item.ready}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                  section === item.id
+                    ? "bg-white/10 text-gold"
+                    : item.ready
+                    ? "text-white/85 hover:bg-white/10 hover:text-white cursor-pointer"
+                    : "text-white/35 cursor-not-allowed"
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  {item.icon}
+                  {item.label}
+                </span>
+                {!item.ready && <Lock className="w-3 h-3" />}
+                {item.ready && count > 0 && (
+                  <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black shadow-sm animate-pulse">
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </nav>
         <div className="p-3 border-t border-white/10">
           <div className="px-3 py-2 mb-1">
@@ -188,8 +225,9 @@ function AdminLayout({ user, onLogout }: { user: AdminUser; onLogout: () => void
       {/* Contenu principal */}
       <main className="flex-1 p-6 overflow-y-auto">
         {section === "dashboard" && <DashboardHome user={user} />}
-        {section === "candidatures" && <CandidaturesView />}
+        {section === "candidatures" && <CandidaturesView onChange={refreshBadges} />}
         {section === "partenaires" && <PartnersView />}
+        {section === "produits" && <ProductsView onChange={refreshBadges} />}
         {section === "statistiques" && <StatisticsView />}
       </main>
     </div>
