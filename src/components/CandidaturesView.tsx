@@ -30,7 +30,7 @@ const STATUS_LABELS: Record<StatusFilter, string> = {
   rejected: "Refusées",
 };
 
-export function CandidaturesView() {
+export function CandidaturesView({ onChange }: { onChange?: () => void }) {
   const [filter, setFilter] = useState<StatusFilter>("pending");
   const [applications, setApplications] = useState<PartnerApplication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +59,7 @@ export function CandidaturesView() {
     // et on rafraîchit pour refléter le vrai état du serveur.
     setExpandedId(null);
     load();
+    onChange?.();
   };
 
   return (
