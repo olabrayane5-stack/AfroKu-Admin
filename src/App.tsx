@@ -16,6 +16,7 @@ import {
 import { adminLogin, adminLogout, getStoredAdminSession, AdminUser } from "./services/adminAuth";
 import { CandidaturesView } from "./components/CandidaturesView";
 import { PartnersView } from "./components/PartnersView";
+import { StatisticsView } from "./components/StatisticsView";
 
 type Section = "dashboard" | "candidatures" | "partenaires" | "utilisateurs" | "reservations" | "statistiques" | "parametres";
 
@@ -131,7 +132,7 @@ const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode; ready: boo
   { id: "partenaires", label: "Partenaires actifs", icon: <UserCog className="w-4 h-4" />, ready: true },
   { id: "utilisateurs", label: "Utilisateurs", icon: <Users className="w-4 h-4" />, ready: false },
   { id: "reservations", label: "Réservations", icon: <CalendarCheck className="w-4 h-4" />, ready: false },
-  { id: "statistiques", label: "Statistiques", icon: <BarChart3 className="w-4 h-4" />, ready: false },
+  { id: "statistiques", label: "Statistiques", icon: <BarChart3 className="w-4 h-4" />, ready: true },
   { id: "parametres", label: "Paramètres", icon: <Settings className="w-4 h-4" />, ready: false },
 ];
 
@@ -189,6 +190,7 @@ function AdminLayout({ user, onLogout }: { user: AdminUser; onLogout: () => void
         {section === "dashboard" && <DashboardHome user={user} />}
         {section === "candidatures" && <CandidaturesView />}
         {section === "partenaires" && <PartnersView />}
+        {section === "statistiques" && <StatisticsView />}
       </main>
     </div>
   );
