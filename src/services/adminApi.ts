@@ -131,3 +131,49 @@ export async function fetchRevenue(): Promise<RevenueData> {
   const response = await fetch(`${API_BASE_URL}/api/admin/revenue`, { headers: authHeaders() });
   return parseOrThrow(response);
 }
+
+export interface PendingProduct {
+  id: string;
+  artisanUserId: string;
+  artisanEmail: string;
+  name: string;
+  category: string;
+  priceXOF: number;
+  description: string;
+  image: string;
+  availability: string;
+  editionType: string;
+  status: "pending" | "approved" | "rejected";
+  adminNotes: string;
+  submittedAt: string;
+  reviewedAt: string | null;
+}
+
+/** Liste les produits soumis par les artisans, filtrable par statut. */
+export async function fetchProducts(status?: "pending" | "approved" | "rejected"): Promise<PendingProduct[]> {
+  const url = status
+    ? `${API_BASE_URL}/api/admin/products?status=${status}`
+    : `${API_BASE_URL}/api/admin/products`;
+  const response = await fetch(url, { headers: authHeaders() });
+  const data = await parseOrThrow(response);
+  return data.products;
+}
+
+/** Publie un produit sur le site. */
+export async function approveProduct(id: string) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/products/${id}/approve`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return parseOrThrow(response);
+}
+
+/** Refuse un produit — motif obligatoire côté serveur. */
+export async function rejectProduct(id: string, reason: string) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/products/${id}/reject`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ reason }),
+  });
+  return parseOrThrow(response);
+}
