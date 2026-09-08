@@ -107,3 +107,27 @@ export async function deletePartner(userId: string) {
   });
   return parseOrThrow(response);
 }
+
+export interface RevenueData {
+  totals: {
+    totalGMV: number;
+    totalCommission: number;
+    totalNetToPartners: number;
+    confirmedCount: number;
+    pendingCount: number;
+    totalReservationsCount: number;
+  };
+  byCategory: Record<string, { count: number; gmv: number; commission: number }>;
+  monthlyTrend: { month: string; gmv: number; commission: number }[];
+  topPartners: { name: string; commission: number; gmv: number; count: number }[];
+}
+
+/**
+ * Tableau de bord financier de la plateforme : commission de 20% réellement
+ * perçue par AfroKu sur toutes les réservations confirmées, tous
+ * prestataires confondus.
+ */
+export async function fetchRevenue(): Promise<RevenueData> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/revenue`, { headers: authHeaders() });
+  return parseOrThrow(response);
+}
