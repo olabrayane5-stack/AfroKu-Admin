@@ -13,6 +13,8 @@ import {
   BarChart3,
   Settings,
   Lock,
+  Menu,
+  X,
 } from "lucide-react";
 import { adminLogin, adminLogout, getStoredAdminSession, AdminUser } from "./services/adminAuth";
 import { fetchApplications, fetchProducts } from "./services/adminApi";
@@ -144,6 +146,7 @@ function AdminLayout({ user, onLogout }: { user: AdminUser; onLogout: () => void
   const [section, setSection] = useState<Section>("dashboard");
   const [pendingCandidatures, setPendingCandidatures] = useState(0);
   const [pendingProducts, setPendingProducts] = useState(0);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const refreshBadges = () => {
     fetchApplications("pending").then((list) => setPendingCandidatures(list.length)).catch(() => {});
@@ -168,10 +171,74 @@ function AdminLayout({ user, onLogout }: { user: AdminUser; onLogout: () => void
     return 0;
   };
 
+  const currentLabel = NAV_ITEMS.find((i) => i.id === section)?.label || "";
+
   return (
-    <div className="min-h-screen bg-slate-100 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-navy text-white flex flex-col shrink-0">
+    <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row">
+      {/* Barre supérieure mobile/tablette (< md) : titre de la section + bouton menu */}
+      <div className="md:hidden bg-navy text-white flex items-center justify-between px-4 py-3 shrink-0">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5 text-gold" />
+          <span className="font-black text-sm">
+            AfroKu<span className="text-gold">.Admin</span>
+          </span>
+        </div>
+        <button
+          onClick={() => setMobileNavOpen((v) => !v)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-xs font-bold"
+        >
+          {currentLabel}
+          {mobileNavOpen ? <X className="w-3.5 h-3.5" /> : <Menu className="w-3.5 h-3.5" />}
+        </button>
+      </div>
+
+      {/* Menu déroulant mobile/tablette : mêmes items, en pleine largeur */}
+      {mobileNavOpen && (
+        <div className="md:hidden bg-navy text-white px-3 pb-3 space-y-1 shrink-0">
+          {NAV_ITEMS.map((item) => {
+            const count = badgeFor(item.id);
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  if (item.ready) {
+                    setSection(item.id);
+                    setMobileNavOpen(false);
+                  }
+                }}
+                disabled={!item.ready}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                  section === item.id
+                    ? "bg-white/10 text-gold"
+                    : item.ready
+                    ? "text-white/85 hover:bg-white/10 hover:text-white cursor-pointer"
+                    : "text-white/35 cursor-not-allowed"
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  {item.icon}
+                  {item.label}
+                </span>
+                {!item.ready && <Lock className="w-3 h-3" />}
+                {item.ready && count > 0 && (
+                  <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black shadow-sm">
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-white/80 hover:bg-white/10 hover:text-white rounded-lg transition-colors mt-2 border-t border-white/10 pt-3"
+          >
+            <LogOut className="w-3.5 h-3.5" /> Déconnexion
+          </button>
+        </div>
+      )}
+
+      {/* Sidebar classique (>= md) */}
+      <aside className="hidden md:flex w-64 bg-navy text-white flex-col shrink-0">
         <div className="p-5 flex items-center gap-2 border-b border-white/10">
           <ShieldCheck className="w-5 h-5 text-gold" />
           <span className="font-black text-sm">
@@ -223,7 +290,7 @@ function AdminLayout({ user, onLogout }: { user: AdminUser; onLogout: () => void
       </aside>
 
       {/* Contenu principal */}
-      <main className="flex-1 p-6 overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 overflow-y-auto min-w-0">
         {section === "dashboard" && <DashboardHome user={user} />}
         {section === "candidatures" && <CandidaturesView onChange={refreshBadges} />}
         {section === "partenaires" && <PartnersView />}
